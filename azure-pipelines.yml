@@ -6,16 +6,16 @@ steps:
     versionSpec: '3.7'
     addToPath: true
     architecture: 'x64'
-- task: PowerShell@1
+- task: CmdLine@2
   inputs:
-    scriptType: 'inlineScript'
-    inlineScript: |
+    script: |
       python -m venv antenv
                source antenv/bin/activate
                python -m pip install --upgrade pip
                pip install setup
                pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt
        python -m pip install flask
+
 
 - task: ArchiveFiles@2
   inputs:
