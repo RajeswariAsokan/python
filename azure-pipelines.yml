@@ -33,9 +33,9 @@ stages:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: 'Container'
-- stage: deploy
+- stage: deploy_uat
   jobs:
-  - job: deploy
+  - job: deploy_uat
     pool:
      name: "Azure Pipelines"
     steps:
@@ -45,13 +45,52 @@ stages:
         buildType: 'current'
         downloadType: 'specific'
         itemPattern: '**/*.zip'
-        downloadPath: '$(System.ArtifactsDirectory)'
+        downloadPath: '$(Build.ArtifactStagingDirectory)'
     - task: AzureRmWebAppDeployment@4
       inputs:
         ConnectionType: 'AzureRM'
         azureSubscription: 'Free Trial (0842a7ee-3fe3-4df8-a868-313b0d4adf3a)'
         appType: 'webAppLinux'
-        WebAppName: 'pythondevopsraji-dev'
-        packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
+        WebAppName: 'pythondevopsuat'
+        packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
         StartupCommand: "gunicorn --bind=0.0.0.0 --workers=4 startup:app"
-    
+- stage: build_dev
+  jobs:
+  - job: build_Dev
+    pool:
+     name: "Azure Pipelines"
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+        buildType: current
+        downloadType: specific
+        itemPattern: "**/*.zip"
+        downloadPath: "$(System.ArtifactsDirectory)"
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+       ConnectionType: AzureRM
+       azureSubscription: "Free Trial (0842a7ee-3fe3-4df8-a868-313b0d4adf3a)"
+       WebAppName: "pythondevopsraji-dev"
+       appType: webAppLinux
+       packageForLinux: "$(System.ArtifactsDirectory)/**/*.zip"
+       StartupCommand: "gunicorn --bind=0.0.0.0 --workers=4 startup:app"
+- stage: deploy_prod
+  jobs:
+  - job: deploy_prod
+    pool:
+     name: "Azure Pipelines"
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+       downloadType: specific
+       buildType: current
+       itemPattern: "**/*.zip"
+       downloadPath: "$(System.DefaultWorkingDirectory)"
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+       ConnectionType: AzureRM
+       azureSubscription: "Free Trial (0842a7ee-3fe3-4df8-a868-313b0d4adf3a)"
+       appType: webAppLinux
+       StartupCommand: "gunicorn --bind=0.0.0.0 --workers=4 startup:app"
+       WebAppName: pythonrajidevops
+       packageForLinux: "$(System.DefaultWorkingDirectory)/**/*.zip"
